@@ -13,7 +13,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,7 +63,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
-    ScrollModifiers(modifier)
+    MultiTouchDemo(modifier)
 }
 
 @Preview(showBackground = true)
@@ -72,137 +75,22 @@ fun MainScreenPreview() {
 }
 
 @Composable
-fun ClickDemo(modifier: Modifier = Modifier) {
-    var colorState by remember { mutableStateOf(true)}
-    var bgColor by remember { mutableStateOf(Color.Blue) }
-    val clickHandler = {
-        colorState = !colorState
-        bgColor = if (colorState) {
-            Color.Blue
-        } else {
-            Color.DarkGray
-        }
+fun MultiTouchDemo(modifier: Modifier = Modifier) {
+    var scale by remember { mutableStateOf(1f) }
+    val state = rememberTransformableState {
+            scaleChange, offsetChange, rotationChange ->
+        scale *= scaleChange
     }
-    Box(
-        modifier
-            .clickable { clickHandler() }
-            .background(bgColor)
-            .size(100.dp)
-    )
-}
-
-
-@Composable
-fun TapPressDemo(modifier: Modifier = Modifier) {
-    var textState by remember {mutableStateOf("Waiting ....")}
-    val tapHandler = { status : String ->
-        textState = status
-    }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxSize()
-    ) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()) {
         Box(
             Modifier
-                .padding(10.dp)
-                .background(Color.Blue)
-                .size(100.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = { tapHandler("onPress Detected") },
-                        onDoubleTap = { tapHandler("onDoubleTap Detected") },
-                        onLongPress = { tapHandler("onLongPress Detected") },
-                        onTap = { tapHandler("onTap Detected") }
-                    )
-                }
-        )
-        Spacer(Modifier.height(10.dp))
-        Text(textState)
-    }
-}
-
-
-@Composable
-fun DragDemo(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize()) {
-
-        var xOffset by remember { mutableStateOf(0f) }
-
-        Box(
-            modifier = Modifier
-                .offset { IntOffset(xOffset.roundToInt(), 0) }
-                .size(100.dp)
-                .background(Color.Blue)
-                .draggable(
-                    orientation = Orientation.Horizontal,
-                    state = rememberDraggableState { distance ->
-                        xOffset += distance
-                    }
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale
                 )
-        )
-    }
-}
-
-@Composable
-fun PointerInputDrag(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize()) {
-        var xOffset by remember { mutableStateOf(0f) }
-        var yOffset by remember { mutableStateOf(0f) }
-        Box(
-            Modifier
-                .offset { IntOffset(xOffset.roundToInt(), yOffset.roundToInt()) }
+                .transformable(state = state)
                 .background(Color.Blue)
                 .size(100.dp)
-                .pointerInput(Unit) {
-                    detectDragGestures { _, distance ->
-                        xOffset += distance.x
-                        yOffset += distance.y
-                    }
-                }
         )
-    }
-}
-
-@Composable
-fun ScrollableModifier(modifier: Modifier = Modifier) {
-    var offset by remember { mutableStateOf(0f) }
-    Box(
-        modifier
-            .fillMaxSize()
-            .scrollable(
-                orientation = Orientation.Vertical,
-                state = rememberScrollableState { distance ->
-                    offset += distance
-                    distance
-                }
-            )
-    ) {
-        Box(modifier = Modifier
-            .size(90.dp)
-            .offset { IntOffset(0, offset.roundToInt()) }
-            .background(Color.Red))
-    }
-}
-
-@Composable
-fun ScrollModifiers(modifier: Modifier = Modifier) {
-    val image = ImageBitmap.imageResource(id = R.drawable.vacation)
-    Box(modifier = modifier
-        .size(150.dp)
-        .verticalScroll(rememberScrollState())
-        .horizontalScroll(rememberScrollState())) {
-        Canvas(
-            modifier = Modifier
-                .size(360.dp, 270.dp)
-        )
-        {
-            drawImage(
-                image = image,
-                topLeft = Offset(
-                    x = 0f,
-                    y = 0f
-                ),
-            )
-        }
     }
 }
